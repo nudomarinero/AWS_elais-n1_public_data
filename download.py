@@ -49,10 +49,11 @@ def download(url):
     
     
     # Download the data
-    command = "srmcp {srm} -globus_tcp_port_range=20000:25000 file://{path}/{f}".format(srm=url, path="/home/ubuntu", f=name)
+    #command = "srmcp {srm} -globus_tcp_port_range=20000:25000 file:////{path}/{f}".format(srm=url, path="/home/ubuntu", f=name)
+    command = "srmcp -server_mode=passive {srm} file:///{path}/{f}".format(srm=url, path="/home/ubuntu", f=name)
     logging.info("Downloading {}".format(name))
     logging.debug(command)
-    #call(command, shell=True)
+    call(command, shell=True)
     
     # Upload to the bucket
     logging.info("Uploading {} to S3".format(name))
@@ -64,7 +65,11 @@ def download(url):
     logging.info("Upload of {} to S3 finished".format(name))
     del conn
     
-
+    # remove temporary data
+    command = "rm -rf {path}/{f}".format(path="/home/ubuntu", f=name)
+    logging.info("Downloading {}".format(name))
+    logging.debug(command)
+    call(command, shell=True)
 
 p = Pool(36)
 p.map(download, surls)
