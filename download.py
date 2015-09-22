@@ -36,18 +36,18 @@ surls = [url.strip() for url in open(file_surls, "rb")]
 
 
 ## Check files not uploaded
-keys = []
+conn = boto.connect_s3()
+bucket = conn.get_bucket(bucket_name)
+uploaded = [key.name for key in bucket.list()]
+del conn
+
+surls_no = []
 for url in surls:
     path, name = os.path.split(url)
     l, sap, sb, suffix = name.split("_")
     key_name = "{}/{}".format(l, name)
-    keys.append(key_name)
-
-conn = boto.connect_s3()
-bucket = conn.get_bucket(bucket_name)
-uploaded = [key.name for key in bucket.list()]
-surls_no = filter(lambda x: x not in uploaded, keys)
-del conn
+    if key_name not in uploaded:
+        surls_no.append(url)
 
 
 ## Define download sequence
