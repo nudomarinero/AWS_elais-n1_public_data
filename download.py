@@ -21,7 +21,7 @@ surls = [url.strip() for url in open(file_surls, "rb")]
 
 ## Logging configuration
 logger = logging.getLogger()
-logger.setLevel(logging.DEBUG)   
+logger.setLevel(logging.INFO)   
 formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 # Log to STDOUT
 ch = logging.StreamHandler()
@@ -48,7 +48,7 @@ def download(url):
     logging.info("Check if {} is already in S3".format(name))
     conn = boto.connect_s3()
     bucket = conn.get_bucket(bucket_name)
-    key = get_key(key_name)
+    key = bucket.get_key(key_name)
     if key is None:
         # Download the data
         if passive:
