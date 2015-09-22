@@ -9,15 +9,9 @@ from subprocess import call
 import boto
 from boto.exception import S3ResponseError
 
-#from boto.s3.key import Key
 
+## Configuration
 bucket_name = "lofar-elais-n1"
-
-## Get URLs
-file_surls = "retrieval/011/surls_successful.txt"
-surls = [url.strip() for url in open(file_surls, "rb")]
-
-#print(surls)
 
 
 ## Logging configuration
@@ -35,11 +29,28 @@ fh.setFormatter(formatter)
 logger.addHandler(fh)
 
 
+## Get URLs
+file_surls = "retrieval/011/surls_successful.txt"
+surls = [url.strip() for url in open(file_surls, "rb")]
+#print(surls)
+
+
+## Check files not uploaded
+keys = []
+for url in surls:
+    path, name = os.path.split(url)
+    l, sap, sb, suffix = name.split("_")
+    key_name = "{}/{}".format(l, name)
+    keys.append(key_name)
+
+conn = boto.connect_s3()
+bucket = conn.get_bucket(bucket_name)
+uploaded = [key.name for key in bucket.list()]
+surls_no = filter(lambda x: x not in uploaded, keys)
+del conn
+
+
 ## Define download sequence
-#bucket = connection.get_bucket(options.bucket)
-
-
-
 def download(url):
     path, name = os.path.split(url)
     l, sap, sb, suffix = name.split("_")
@@ -88,4 +99,4 @@ def download(url):
     del conn
 
 p = Pool(36)
-p.map(download, surls)
+p.map(download, surls_no)
