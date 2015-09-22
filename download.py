@@ -7,6 +7,8 @@ import logging
 import os
 from subprocess import call, check_output
 import boto
+from boto.exception import S3ResponseError
+
 #from boto.s3.key import Key
 
 bucket_name = "lofar-elais-n1"
@@ -48,32 +50,35 @@ def download(url):
     logging.info("Check if {} is already in S3".format(name))
     conn = boto.connect_s3()
     bucket = conn.get_bucket(bucket_name)
-    key = bucket.get_key(key_name)
-    if key is None:
-        # Download the data
-        if passive:
-            command = "srmcp -server_mode=passive {srm} file:///{path}/{f}".format(srm=url, path="/home/ubuntu", f=name)
+    try:
+        key = bucket.get_key(key_name)
+        if key is None:
+            # Download the data
+            if passive:
+                command = "srmcp -server_mode=passive {srm} file:///{path}/{f}".format(srm=url, path="/home/ubuntu", f=name)
+            else:
+                command = "srmcp {srm} -globus_tcp_port_range=20000:25000 file:////{path}/{f}".format(srm=url, path="/home/ubuntu", f=name)
+                "-array_of_client_networks="
+            logging.info("Downloading {}".format(name))
+            logging.debug(command)
+            output = check_output(command, shell=True)
+            logging.debug(output)
+            
+            # Upload to the bucket
+            logging.info("Uploading {} to S3".format(name))
+            k = bucket.new_key(key_name)
+            k.set_contents_from_filename("{path}/{f}".format(srm=url, path="/home/ubuntu", f=name))
+            logging.info("Upload of {} to S3 finished".format(name))
+            
+            # remove temporary data
+            command = "rm -rf {path}/{f}".format(path="/home/ubuntu", f=name)
+            logging.info("Downloading {}".format(name))
+            logging.debug(command)
+            call(command, shell=True)
         else:
-            command = "srmcp {srm} -globus_tcp_port_range=20000:25000 file:////{path}/{f}".format(srm=url, path="/home/ubuntu", f=name)
-            "-array_of_client_networks="
-        logging.info("Downloading {}".format(name))
-        logging.debug(command)
-        output = check_output(command, shell=True)
-        logging.debug(output)
-        
-        # Upload to the bucket
-        logging.info("Uploading {} to S3".format(name))
-        k = bucket.new_key(key_name)
-        k.set_contents_from_filename("{path}/{f}".format(srm=url, path="/home/ubuntu", f=name))
-        logging.info("Upload of {} to S3 finished".format(name))
-        
-        # remove temporary data
-        command = "rm -rf {path}/{f}".format(path="/home/ubuntu", f=name)
-        logging.info("Downloading {}".format(name))
-        logging.debug(command)
-        call(command, shell=True)
-    else:
-        logging.warn("{} is already in S3".format(name))
+            logging.warn("{} is already in S3".format(name))
+    except S3ResponseError:
+        logging.error("Error querying {}".format(name))
     del conn
 
 p = Pool(36)
