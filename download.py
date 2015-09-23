@@ -29,25 +29,21 @@ fh.setFormatter(formatter)
 logger.addHandler(fh)
 
 
-## Get URLs
-file_surls = "retrieval/011/surls_successful.txt"
-surls = [url.strip() for url in open(file_surls, "rb")]
-#print(surls)
-
-
 ## Check files not uploaded
-conn = boto.connect_s3()
-bucket = conn.get_bucket(bucket_name)
-uploaded = [key.name for key in bucket.list()]
-del conn
+def check_no(surls):
+    conn = boto.connect_s3()
+    bucket = conn.get_bucket(bucket_name)
+    uploaded = [key.name for key in bucket.list()]
+    del conn
 
-surls_no = []
-for url in surls:
-    path, name = os.path.split(url)
-    l, sap, sb, suffix = name.split("_")
-    key_name = "{}/{}".format(l, name)
-    if key_name not in uploaded:
-        surls_no.append(url)
+    surls_no = []
+    for url in surls:
+        path, name = os.path.split(url)
+        l, sap, sb, suffix = name.split("_")
+        key_name = "{}/{}".format(l, name)
+        if key_name not in uploaded:
+            surls_no.append(url)
+    return surls_no
 
 
 ## Define download sequence
@@ -64,20 +60,30 @@ def download(url):
         key = bucket.get_key(key_name)
         if key is None:
             local_file = "{path}/{f}".format(path="/home/ubuntu", f=name)
+            local_file_complete_flag = "{path}/{f}.complete".format(path="/home/ubuntu", f=name)
             
-            if os.path.exists(local_file):
-                # remove stale data
-                command = "rm -rf {lf}".format(lf=local_file)
-                logging.info("Remove old version of {}".format(name))
+            # Download data with srm or use present data
+            if not (os.path.exists(local_file) and os.path.exists(local_file_complete_flag)):
+                if os.path.exists(local_file):
+                    # remove stale data
+                    command = "rm -rf {lf}".format(lf=local_file)
+                    logging.info("Remove old version of {}".format(name))
+                    logging.debug(command)
+                    call(command, shell=True)
+                # Download the data
+                command = "srmcp -server_mode=passive -retry_num=3 {srm} file:///{lf}".format(srm=url, lf=local_file)
+                logging.info("Downloading {}".format(name))
                 logging.debug(command)
                 call(command, shell=True)
+                if os.path.exists(local_file):
+                    command = "touch {lf}".format(lf=local_file_complete_flag)
+                    call(command, shell=True)
+                else:
+                    logging.error("{} not found after download!".format(name))
+            else:
+                logging.warn("{} found locally".format(name))
             
-            # Download the data
-            command = "srmcp -server_mode=passive {srm} file:///{lf}".format(srm=url, lf=local_file)
-            logging.info("Downloading {}".format(name))
-            logging.debug(command)
-            call(command, shell=True)
-            
+            # Upload data to S3
             if os.path.exists(local_file):
                 # Upload to the bucket
                 logging.info("Uploading {} to S3".format(name))
@@ -86,7 +92,7 @@ def download(url):
                 logging.info("Upload of {} to S3 finished".format(name))
                 
                 # remove temporary data
-                command = "rm -rf {lf}".format(lf=local_file)
+                command = "rm -rf {lf} {lfc}".format(lf=local_file, lfc=local_file_complete_flag)
                 logging.info("Remove temporary version of {}".format(name))
                 logging.debug(command)
                 call(command, shell=True)
@@ -98,5 +104,23 @@ def download(url):
         logging.error("Error querying {}".format(name))
     del conn
 
-p = Pool(36)
-p.map(download, surls_no)
+if __name__ == "__main__":
+    n_process = 36
+    n_retry = 10
+    
+    ## Get URLs
+    file_surls = "retrieval/011/surls_successful.txt"
+    surls = [url.strip() for url in open(file_surls, "rb")]
+    #print(surls)
+    
+    for i in range(n_retry):
+        surls_no = check_no(surls)
+        n_no = len(surls_no)
+        if n_no > 0:
+            logging.info("Start download loop {}; downloading {} MSs".format(i, n_no))
+            p = Pool(n_process)
+            p.map(download, surls_no)
+            logging.info("End download loop {}".format(i))
+        else:
+            logging.info("Abort download loop {}; all the data already in S3".format(i))
+            break
