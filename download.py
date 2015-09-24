@@ -132,7 +132,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     # Debug
-    print(args.srm)
-    #download(args.srm)
+    #print(args.srm)
+    download(args.srm)
     
 
