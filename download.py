@@ -8,6 +8,7 @@ import os
 from subprocess import call
 import boto
 from boto.exception import S3ResponseError
+import argparse
 
 
 ## Configuration
@@ -104,15 +105,11 @@ def download(url):
         logging.error("Error querying {}".format(name))
     del conn
 
-if __name__ == "__main__":
-    n_process = 36
-    n_retry = 10
-    
-    ## Get URLs
-    file_surls = "retrieval/011/surls_successful.txt"
-    surls = [url.strip() for url in open(file_surls, "rb")]
-    #print(surls)
-    
+def multiprocess_download(surls, n_process=36, n_retry=10):
+    """
+    Parallel download using multiprocessing.
+    Not working.
+    """
     for i in range(n_retry):
         surls_no = check_no(surls)
         n_no = len(surls_no)
@@ -124,3 +121,18 @@ if __name__ == "__main__":
         else:
             logging.info("Abort download loop {}; all the data already in S3".format(i))
             break
+
+if __name__ == "__main__":
+    ### Get URLs
+    #file_surls = "retrieval/011/surls_successful.txt"
+    #surls = [url.strip() for url in open(file_surls, "rb")]
+    ##print(surls)
+    parser = argparse.ArgumentParser(description='Download srm file and upload it to S3')
+    parser.add_argument('srm', help='SRM link')
+    args = parser.parse_args()
+    
+    # Debug
+    print(args.srm)
+    #download(args.srm)
+    
+
