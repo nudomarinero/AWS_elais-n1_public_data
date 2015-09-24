@@ -9,6 +9,8 @@ from subprocess import call
 import boto
 from boto.exception import S3ResponseError
 import argparse
+from filechunkio import FileChunkIO
+import math
 
 
 ## Configuration
@@ -87,9 +89,19 @@ def download(url):
             # Upload data to S3
             if os.path.exists(local_file):
                 # Upload to the bucket
+                #k = bucket.new_key(key_name)
+                source_size = os.stat(local_file).st_size
+                mp = bucket.initiate_multipart_upload(key_name)
+                chunk_size = 52428800
+                chunk_count = int(math.ceil(source_size / float(chunk_size)))
                 logging.info("Uploading {} to S3".format(name))
-                k = bucket.new_key(key_name)
-                k.set_contents_from_filename(local_file)
+                for j in range(chunk_count):
+                    offset = chunk_size * j
+                    nbytes = min(chunk_size, source_size - offset)
+                    with FileChunkIO(local_file, 'r', offset=offset, bytes=nbytes) as fp:
+                        mp.upload_part_from_file(fp, part_num=i+1)
+                mp.complete_upload()
+                #k.set_contents_from_filename(local_file)
                 logging.info("Upload of {} to S3 finished".format(name))
                 
                 # remove temporary data
