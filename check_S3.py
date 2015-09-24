@@ -31,17 +31,17 @@ if __name__ == "__main__":
     surls_no = check_no(surls)
     
     # Order
-    sn_local = []
+    surls_final = []
     sn_else = []
     for url in surls_no:
         path, name = os.path.split(url)
         l, sap, sb, suffix = name.split("_")
         local_file = "{path}/{f}".format(path="/home/ubuntu", f=name)
         if os.path.exists(local_file):
-            sn_local.append(url)
+            surls_final.append(url)
         else:
             sn_else.append(url)
-    surls_final = sn_local.extend(sn_else)
+    surls_final.extend(sn_else)
         
     
     for url in surls_final:
