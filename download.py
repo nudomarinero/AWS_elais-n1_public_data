@@ -99,7 +99,7 @@ def download(url):
                     offset = chunk_size * j
                     nbytes = min(chunk_size, source_size - offset)
                     with FileChunkIO(local_file, 'r', offset=offset, bytes=nbytes) as fp:
-                        mp.upload_part_from_file(fp, part_num=i+1)
+                        mp.upload_part_from_file(fp, part_num=j+1)
                 mp.complete_upload()
                 #k.set_contents_from_filename(local_file)
                 logging.info("Upload of {} to S3 finished".format(name))
