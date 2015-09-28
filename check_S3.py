@@ -2,6 +2,7 @@
 from __future__ import print_function
 import os
 import boto
+import argparse
 
 
 ## Configuration
@@ -24,9 +25,13 @@ def check_no(surls):
     return surls_no
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Check if a list of URLS is in S3')
+    parser.add_argument('srm', help='SRM list')
+    args = parser.parse_args()
     
     ## Get URLs
-    file_surls = "retrieval/011/surls_successful.txt"
+    #"retrieval/009/surls_successful.txt"
+    file_surls = args.srm
     surls = [url.strip() for url in open(file_surls, "rb")]
     surls_no = check_no(surls)
     
