@@ -98,6 +98,7 @@ def download(url):
                 for j in range(chunk_count):
                     offset = chunk_size * j
                     nbytes = min(chunk_size, source_size - offset)
+                    logging.debug("Uploading chunk {} of {} of {} to S3".format(j, chunk_count, name))
                     with FileChunkIO(local_file, 'r', offset=offset, bytes=nbytes) as fp:
                         mp.upload_part_from_file(fp, part_num=j+1)
                 mp.complete_upload()
@@ -146,5 +147,7 @@ if __name__ == "__main__":
     # Debug
     #print(args.srm)
     download(args.srm)
+    
+    # RUN: cat surls_no.txt | xargs -P 36 -n 1 python download.py
     
 
