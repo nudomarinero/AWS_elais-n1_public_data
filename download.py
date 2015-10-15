@@ -79,8 +79,20 @@ def download(url):
                 logging.debug(command)
                 call(command, shell=True)
                 if os.path.exists(local_file):
-                    command = "touch {lf}".format(lf=local_file_complete_flag)
-                    call(command, shell=True)
+                    try:
+                        size = os.path.getsize(local_file)
+                        if size != 0:
+                            command = "touch {lf}".format(lf=local_file_complete_flag)
+                            call(command, shell=True)
+                            logging.debud("Download of {} completed".format(name))
+                        else:
+                            # remove stale data
+                            command = "rm -rf {lf}".format(lf=local_file)
+                            logging.info("Remove failed version of {}".format(name))
+                            logging.debug(command)
+                            call(command, shell=True)
+                    except OSError:
+                        logging.error("{} with no local size!!".format(name))
                 else:
                     logging.error("{} not found after download!".format(name))
             else:
