@@ -84,7 +84,7 @@ def download(url):
                         if size != 0:
                             command = "touch {lf}".format(lf=local_file_complete_flag)
                             call(command, shell=True)
-                            logging.debud("Download of {} completed".format(name))
+                            logging.debug("Download of {} completed".format(name))
                         else:
                             # remove stale data
                             command = "rm -rf {lf}".format(lf=local_file)
