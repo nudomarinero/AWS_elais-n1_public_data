@@ -1,0 +1,6 @@
+srm://srm.grid.sara.nl/pnfs/grid.sara.nl/data/lofar/ops/eor/L2014_230461_002/L230461_SAP000_SB155_uv.MS.dppp.tar
+srm://srm.grid.sara.nl/pnfs/grid.sara.nl/data/lofar/ops/eor/L2014_230461_002/L230461_SAP000_SB156_uv.MS.dppp.tar
+srm://srm.grid.sara.nl/pnfs/grid.sara.nl/data/lofar/ops/eor/L2014_230461_002/L230461_SAP000_SB160_uv.MS.dppp.tar
+srm://srm.grid.sara.nl/pnfs/grid.sara.nl/data/lofar/ops/eor/L2014_230461_002/L230461_SAP002_SB409_uv.MS.dppp.tar
+srm://srm.grid.sara.nl/pnfs/grid.sara.nl/data/lofar/ops/eor/L2014_230461_002/L230461_SAP003_SB447_uv.MS.dppp.tar
+srm://srm.grid.sara.nl/pnfs/grid.sara.nl/data/lofar/ops/eor/L2014_230461_002/L230461_SAP003_SB448_uv.MS.dppp.tar
