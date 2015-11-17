@@ -59,6 +59,7 @@ def download(url, conf=None):
     logging.info("Check if {} is already in S3".format(name))
     if conf is None: #AWS
         conn = boto.connect_s3()
+        local_file_path = "/home/ubuntu"
     else:
         conn = boto.connect_s3(
             aws_access_key_id = conf["access_key"],
@@ -68,13 +69,14 @@ def download(url, conf=None):
             is_secure = conf.get("is_secure", False),
             calling_format = boto.s3.connection.OrdinaryCallingFormat()
             )
+        local_file_path = conf.get("local_file_path", "/home/ubuntu")
     
     bucket = conn.get_bucket(bucket_name)
     try:
         key = bucket.get_key(key_name)
         if key is None:
-            local_file = "{path}/{f}".format(path="/home/ubuntu", f=name)
-            local_file_complete_flag = "{path}/{f}.complete".format(path="/home/ubuntu", f=name)
+            local_file = "{path}/{f}".format(path=local_file_path, f=name)
+            local_file_complete_flag = "{path}/{f}.complete".format(path=local_file_path, f=name)
             
             # Download data with srm or use present data
             if not (os.path.exists(local_file) and os.path.exists(local_file_complete_flag)):
