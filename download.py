@@ -50,14 +50,25 @@ logger.addHandler(fh)
 
 
 ## Define download sequence
-def download(url):
+def download(url, conf=None):
     path, name = os.path.split(url)
     l, sap, sb, suffix = name.split("_")
     key_name = "{}/{}".format(l, name)
     
     # Check if the data is already in the bucket
     logging.info("Check if {} is already in S3".format(name))
-    conn = boto.connect_s3()
+    if conf is None: #AWS
+        conn = boto.connect_s3()
+    else:
+        conn = boto.connect_s3(
+            aws_access_key_id = conf["access_key"],
+            aws_secret_access_key = conf["secret_key"],
+            host = conf["host"],
+            port = conf.get("port", 80),
+            is_secure = conf.get("is_secure", False),
+            calling_format = boto.s3.connection.OrdinaryCallingFormat()
+            )
+    
     bucket = conn.get_bucket(bucket_name)
     try:
         key = bucket.get_key(key_name)
@@ -158,7 +169,12 @@ if __name__ == "__main__":
     
     # Debug
     #print(args.srm)
-    download(args.srm)
+    try:
+        # Load the configuration parameters from a configuration file
+        from configuration import conf
+        download(args.srm, conf=conf)
+    except ImportError:
+        download(args.srm)
     
     # RUN: cat surls_no.txt | xargs -P 36 -n 1 python download.py
     

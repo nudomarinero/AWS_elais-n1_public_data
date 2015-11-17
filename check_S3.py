@@ -3,14 +3,26 @@ from __future__ import print_function
 import os
 import boto
 import argparse
+import boto.s3.connection
 
 
 ## Configuration
 bucket_name = "lofar-elais-n1"
 
 ## Check files not uploaded
-def check_no(surls):
-    conn = boto.connect_s3()
+def check_no(surls, conf=None):
+    if conf is None: #AWS
+        conn = boto.connect_s3()
+    else:
+        conn = boto.connect_s3(
+            aws_access_key_id = conf["access_key"],
+            aws_secret_access_key = conf["secret_key"],
+            host = conf["host"],
+            port = conf.get("port", 80),
+            is_secure = conf.get("is_secure", False),
+            calling_format = boto.s3.connection.OrdinaryCallingFormat()
+            )
+
     bucket = conn.get_bucket(bucket_name)
     uploaded = [key.name for key in bucket.list()]
     del conn
@@ -33,7 +45,13 @@ if __name__ == "__main__":
     #"retrieval/009/surls_successful.txt"
     file_surls = args.srm
     surls = [url.strip() for url in open(file_surls, "rb")]
-    surls_no = check_no(surls)
+    
+    try:
+        # Load the configuration parameters from a configuration file
+        from configuration import conf
+        surls_no = check_no(surls, conf=conf)
+    except ImportError:
+        surls_no = check_no(surls)
     
     # Order
     surls_final = []
