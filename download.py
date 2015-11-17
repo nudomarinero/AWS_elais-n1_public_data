@@ -33,20 +33,20 @@ logger.addHandler(fh)
 
 
 ## Check files not uploaded
-def check_no(surls):
-    conn = boto.connect_s3()
-    bucket = conn.get_bucket(bucket_name)
-    uploaded = [key.name for key in bucket.list()]
-    del conn
+#def check_no(surls):
+    #conn = boto.connect_s3()
+    #bucket = conn.get_bucket(bucket_name)
+    #uploaded = [key.name for key in bucket.list()]
+    #del conn
 
-    surls_no = []
-    for url in surls:
-        path, name = os.path.split(url)
-        l, sap, sb, suffix = name.split("_")
-        key_name = "{}/{}".format(l, name)
-        if key_name not in uploaded:
-            surls_no.append(url)
-    return surls_no
+    #surls_no = []
+    #for url in surls:
+        #path, name = os.path.split(url)
+        #l, sap, sb, suffix = name.split("_")
+        #key_name = "{}/{}".format(l, name)
+        #if key_name not in uploaded:
+            #surls_no.append(url)
+    #return surls_no
 
 
 ## Define download sequence
@@ -130,22 +130,22 @@ def download(url):
         logging.error("Error querying {}".format(name))
     del conn
 
-def multiprocess_download(surls, n_process=36, n_retry=10):
-    """
-    Parallel download using multiprocessing.
-    Not working.
-    """
-    for i in range(n_retry):
-        surls_no = check_no(surls)
-        n_no = len(surls_no)
-        if n_no > 0:
-            logging.info("Start download loop {}; downloading {} MSs".format(i, n_no))
-            p = Pool(n_process)
-            p.map(download, surls_no)
-            logging.info("End download loop {}".format(i))
-        else:
-            logging.info("Abort download loop {}; all the data already in S3".format(i))
-            break
+#def multiprocess_download(surls, n_process=36, n_retry=10):
+    #"""
+    #Parallel download using multiprocessing.
+    #Not working.
+    #"""
+    #for i in range(n_retry):
+        #surls_no = check_no(surls)
+        #n_no = len(surls_no)
+        #if n_no > 0:
+            #logging.info("Start download loop {}; downloading {} MSs".format(i, n_no))
+            #p = Pool(n_process)
+            #p.map(download, surls_no)
+            #logging.info("End download loop {}".format(i))
+        #else:
+            #logging.info("Abort download loop {}; all the data already in S3".format(i))
+            #break
 
 if __name__ == "__main__":
     ### Get URLs
