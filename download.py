@@ -8,6 +8,7 @@ import os
 from subprocess import call
 import boto
 from boto.exception import S3ResponseError
+import boto.s3.connection
 import argparse
 from filechunkio import FileChunkIO
 import math
