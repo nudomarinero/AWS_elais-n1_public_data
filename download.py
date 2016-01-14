@@ -51,7 +51,7 @@ logger.addHandler(fh)
 
 
 ## Define download sequence
-def download(url, conf=None):
+def download(url, conf=None, force=False):
     path, name = os.path.split(url)
     l, sap, sb, suffix = name.split("_")
     key_name = "{}/{}".format(l, name)
@@ -75,7 +75,7 @@ def download(url, conf=None):
     bucket = conn.get_bucket(bucket_name)
     try:
         key = bucket.get_key(key_name)
-        if key is None:
+        if (key is None) or force:
             local_file = "{path}/{f}".format(path=local_file_path, f=name)
             local_file_complete_flag = "{path}/{f}.complete".format(path=local_file_path, f=name)
             
@@ -114,6 +114,10 @@ def download(url, conf=None):
             
             # Upload data to S3
             if os.path.exists(local_file):
+                # Remove data from S3 if it exists
+                if force and (key is not None):
+                    bucket.delete_key(key_name)
+                    logging.warn("Forced upload, {} removed from S3".format(name))
                 # Upload to the bucket
                 #k = bucket.new_key(key_name)
                 source_size = os.stat(local_file).st_size
@@ -167,6 +171,8 @@ if __name__ == "__main__":
     #surls = [url.strip() for url in open(file_surls, "rb")]
     ##print(surls)
     parser = argparse.ArgumentParser(description='Download srm file and upload it to S3')
+    parser.add_argument('-f','--force', action="store_true", default=False, 
+                        help='Force the upload (overwrite)')
     parser.add_argument('srm', help='SRM link')
     args = parser.parse_args()
     
@@ -175,9 +181,9 @@ if __name__ == "__main__":
     try:
         # Load the configuration parameters from a configuration file
         from configuration import conf
-        download(args.srm, conf=conf)
+        download(args.srm, conf=conf, force=args.force)
     except ImportError:
-        download(args.srm)
+        download(args.srm, force=args.force)
     
     # RUN: cat surls_no.txt | xargs -P 36 -n 1 python download.py
     
