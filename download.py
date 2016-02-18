@@ -14,9 +14,6 @@ from filechunkio import FileChunkIO
 import math
 
 
-## Configuration
-bucket_name = "lofar-elais-n1"
-
 
 ## Logging configuration
 logger = logging.getLogger()
@@ -33,28 +30,18 @@ fh.setFormatter(formatter)
 logger.addHandler(fh)
 
 
-## Check files not uploaded
-#def check_no(surls):
-    #conn = boto.connect_s3()
-    #bucket = conn.get_bucket(bucket_name)
-    #uploaded = [key.name for key in bucket.list()]
-    #del conn
-
-    #surls_no = []
-    #for url in surls:
-        #path, name = os.path.split(url)
-        #l, sap, sb, suffix = name.split("_")
-        #key_name = "{}/{}".format(l, name)
-        #if key_name not in uploaded:
-            #surls_no.append(url)
-    #return surls_no
-
-
 ## Define download sequence
-def download(url, conf=None, force=False):
+def download(url, conf=None, force=False, tier1=False, bucket_name="lofar-elais-n1"):
     path, name = os.path.split(url)
-    l, sap, sb, suffix = name.split("_")
-    key_name = "{}/{}".format(l, name)
+    if tier1:
+        l, sb, suffix, hash_tar = name.split("_")
+        hash_split = hash_tar.split(".")
+        if hash_split[1] == "tar":
+            suffix = suffix + ".tar"
+        key_name = "{}_{}_{}".format(l, sb, suffix)
+    else:
+        l, sap, sb, suffix = name.split("_")
+        key_name = "{}/{}".format(l, name)
     
     # Check if the data is already in the bucket
     logging.info("Check if {} is already in S3".format(name))
@@ -173,6 +160,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Download srm file and upload it to S3')
     parser.add_argument('-f','--force', action="store_true", default=False, 
                         help='Force the upload (overwrite)')
+    parser.add_argument('-t','--tier1', action="store_true", default=False, 
+                        help='Use Tier1 name format')
+    parser.add_argument('-b','--bucket', default="lofar-elais-n1", 
+                        help='Bucket name')
     parser.add_argument('srm', help='SRM link')
     args = parser.parse_args()
     
@@ -181,9 +172,9 @@ if __name__ == "__main__":
     try:
         # Load the configuration parameters from a configuration file
         from configuration import conf
-        download(args.srm, conf=conf, force=args.force)
+        download(args.srm, conf=conf, force=args.force, tier1=args.tier1, bucket_name=args.bucket)
     except ImportError:
-        download(args.srm, force=args.force)
+        download(args.srm, force=args.force, tier1=args.tier1, bucket_name=args.bucket)
     
     # RUN: cat surls_no.txt | xargs -P 36 -n 1 python download.py
     
