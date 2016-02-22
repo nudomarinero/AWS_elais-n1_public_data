@@ -60,7 +60,7 @@ def make_public(surls, conf=None, tier1=False, bucket_name="lofar-elais-n1"):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Check if a list of URLS is in S3')
-    parser.add_argument('srm', help='SRM list', default=None)
+    parser.add_argument('--srm', '-s', help='SRM list', default=None)
     parser.add_argument('-t','--tier1', action="store_true", default=False, 
                         help='Use Tier1 name format')
     parser.add_argument('-b','--bucket', default="lofar-elais-n1", 
